@@ -15,9 +15,11 @@ class Sim:
 
         # Initializes pygame
         pygame.init()
+
         # Initializes screen
         self.screen = pygame.display.set_mode(size)
         self.screen_size = size
+
         # Sets screen title
         pygame.display.set_caption("Roads of Code")
 
@@ -43,13 +45,15 @@ class Sim:
             vehicle.draw(self.screen)
 
     def loop(self):
+        # Initializates position and vehicle
         position = [self.screen_size[0] / 2, self.screen_size[1] / 2]
-        vehicle = Vehicle(self.image_vehicle, position)
+        vehicle = Vehicle(self.image_vehicle, position, debug=self.DEBUG)
         vehicle.set_speed((0, 0))
         vehicle.set_accel((0, 0))
 
         self.vehicles.append(vehicle)
 
+        # Initializates time variables
         dt = 0
         time_initial = pygame.time.get_ticks() / 1000
 

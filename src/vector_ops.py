@@ -1,6 +1,10 @@
 import math
 
 
+def vec_add(v1, v2):
+    return tuple((v2[0] + v1[0], v2[1] + v1[1]))
+
+
 def vec_sub(v1, v2):
     return tuple((v2[0] - v1[0], v2[1] - v1[1]))
 
