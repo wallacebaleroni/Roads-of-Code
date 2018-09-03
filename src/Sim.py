@@ -8,9 +8,9 @@ class Sim:
     run = True
     interval = 0
 
-    def __init__(self, size, DEBUG):
+    def __init__(self, size, debug):
         # Initializes game variables
-        self.DEBUG = DEBUG
+        self.DEBUG = debug
         self.vehicles = []
 
         # Initializes pygame

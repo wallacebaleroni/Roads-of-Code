@@ -1,4 +1,4 @@
-from src.vector_ops import *
+from src.aux_ops import *
 import pygame
 
 
@@ -8,12 +8,13 @@ class Vehicle(pygame.sprite.Sprite):
 
         # Loads image
         self.image = image
+        self.rotated_image = image
 
         # Gets image and duplay rects
         self.rect = self.image.get_rect()
         self.area = pygame.display.get_surface().get_rect()
 
-        # Sets debug option and initiates debug lines used to show the vectors acting on the vehicle
+        # Sets debug option and initializes debug lines used to show the vectors acting on the vehicle
         self.DEBUG = debug
         self.debug_lines = []
 
@@ -23,7 +24,7 @@ class Vehicle(pygame.sprite.Sprite):
         self.accel = (0, 0)
 
         self.maxspeed = self.metric_to_pixel(22)
-        self.maxaccel = self.metric_to_pixel(10)
+        self.maxaccel = self.metric_to_pixel(25)
 
     def update(self, dt):
         # Applies seeking behavior
@@ -34,6 +35,9 @@ class Vehicle(pygame.sprite.Sprite):
                          self.velocity[1] + self.accel[1] * dt)
         self.position = (self.position[0] + self.velocity[0] * dt,
                          self.position[1] + self.velocity[1] * dt)
+
+        # Rotates acording to velocity
+        self.rotated_image = pygame.transform.rotate(self.image, vec_angle(self.velocity))
 
         # Moves the vehicle to the right place
         self.rect.move_ip(self.position)
@@ -63,18 +67,29 @@ class Vehicle(pygame.sprite.Sprite):
         self.accel = vec_add(self.accel, vector)
 
     def draw(self, screen):
-        # Draws image on the screen
-        screen.blit(self.image, self.position)
+        # Draws vehicle on the screen
+        screen.blit(self.rotated_image, self.position)
 
-        # Draw debug lines
+        # Draws debug objects
         if self.DEBUG:
+            # Draws debug lines
+            # Desired
             pygame.draw.line(pygame.display.get_surface(), (255, 0, 0),  # red
-                             self.position, vec_add(self.position, self.debug_lines[0]), 2)  # desired
+                             self.get_center_position(),
+                             vec_add(self.get_center_position(), self.debug_lines[0]), 2)
+            # Speed
             pygame.draw.line(pygame.display.get_surface(), (0, 255, 0),  # green
-                             self.position, vec_add(self.position, self.debug_lines[1]), 2)  # speed
+                             self.get_center_position(),
+                             vec_add(self.get_center_position(), self.debug_lines[1]), 2)
+            # Accel
             pygame.draw.line(pygame.display.get_surface(), (0, 0, 255),  # blue
-                             self.position, vec_add(self.position, self.debug_lines[2]), 2)  # accel
+                             self.get_center_position(),
+                             vec_add(self.get_center_position(), self.debug_lines[2]), 2)
+
         self.debug_lines.clear()
+
+    def get_center_position(self):
+        return vec_add(self.position, self.rotated_image.get_rect().center)
 
     def get_accel(self):
         return self.accel

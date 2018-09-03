@@ -6,7 +6,7 @@ def vec_add(v1, v2):
 
 
 def vec_sub(v1, v2):
-    return tuple((v2[0] - v1[0], v2[1] - v1[1]))
+    return tuple((v1[0] - v2[0], v1[1] - v2[1]))
 
 
 def vec_normalize(v):
@@ -31,3 +31,16 @@ def vec_limit(v, n):
         return vec_set_mag(v, n)
     else:
         return v
+
+
+def vec_angle(v):
+    if v[0] == 0:
+        return 0
+
+    angle = -math.degrees(math.atan(v[1]/v[0]))
+
+    if v[0] < 0 and v[1] > 0:
+        angle -= 180
+    elif v[0] < 0 and v[1] < 0:
+        angle += 180
+    return angle
