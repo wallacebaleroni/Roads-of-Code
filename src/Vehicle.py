@@ -25,10 +25,18 @@ class Vehicle(pygame.sprite.Sprite):
 
         self.maxspeed = self.metric_to_pixel(22)
         self.maxaccel = self.metric_to_pixel(25)
+        self.maxbrake = -self.metric_to_pixel(145)
+
+        # Initializes obstacle list
+        self.near_obstacles = []
+
+        # Initializes future path rect
+        self.generate_future_path_rect()
 
     def update(self, dt):
         # Applies seeking behavior
         self.apply_force(self.seek(pygame.mouse.get_pos()))
+        self.brake()
 
         # Updates speed and position
         self.velocity = (self.velocity[0] + self.accel[0] * dt,
@@ -70,10 +78,32 @@ class Vehicle(pygame.sprite.Sprite):
 
         return steer
 
+    def brake(self):
+        # Get nearest obstacles
+        self.near_obstacles.clear()
+        self.near_obstacles.append(pygame.mouse.get_pos())
+
+        # Creates future path rect
+        self.generate_future_path_rect()
+
+
+
+
+        # Pega velocidade e projeta pra alguns segundos
+        # Talvez esses segundos tenham a ver com distancia segura
+        # Se nesses proximos segundos ele colidir com algo (no caso o mouse)
+        #   Faz torricelli pra descobrir aceleração negativa necessário pra frear
+        #   Limitar essa aceleracao pelo max brake
+        return self
+
     def apply_force(self, vector):
         self.accel = vec_add(self.accel, vector)
 
     def draw(self, screen):
+        if self.DEBUG:
+            # Draws future rect
+            screen.blit(self.rotated_future_path, self.position)
+
         # Draws vehicle on the screen
         screen.blit(self.rotated_image, self.position)
 
@@ -97,6 +127,14 @@ class Vehicle(pygame.sprite.Sprite):
 
     def get_center_position(self):
         return vec_add(self.position, self.rotated_image.get_rect().center)
+
+    def generate_future_path_rect(self):
+        path_distance = 100
+        print(self.image.get_size()[1])
+        self.future_path = pygame.Surface((path_distance, self.image.get_size()[1]))
+        self.future_path.fill((0, 255, 0))
+        print(self.velocity)
+        self.rotated_future_path = pygame.transform.rotate(self.future_path, vec_angle(self.velocity))
 
     def get_accel(self):
         return self.accel
