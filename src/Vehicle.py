@@ -51,8 +51,15 @@ class Vehicle(pygame.sprite.Sprite):
 
     def seek(self, target):
         # Calculates de desired velocity
-        desired = vec_sub(target, self.position)
-        desired = vec_set_mag(desired, self.maxspeed)
+        desired = vec_sub(target, self.get_center_position())
+        distance = vec_mag(desired)
+        desired = vec_normalize(desired)
+
+        # Applies arrival behaviour
+        if distance < 100:  # TODO: Parameterize min distance
+            desired = vec_mult_n(desired, proportional_map(distance, 0, 100, 0, self.maxspeed))
+        else:
+            desired = vec_mult_n(desired, self.maxspeed)
 
         # Add desired vector to debug lines
         self.debug_lines.append(desired)

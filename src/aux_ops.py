@@ -44,3 +44,7 @@ def vec_angle(v):
     elif v[0] < 0 and v[1] < 0:
         angle += 180
     return angle
+
+
+def proportional_map(n, min1, max1, min2, max2):
+    return (max2 - min2)/((max1 - min1)/(n - min1))
