@@ -27,8 +27,10 @@ class Vehicle(pygame.sprite.Sprite):
         # Initializes obstacle list
         self.near_obstacles = []
 
-        # Initializes future path rect
-        self.generate_future_path_rect()
+        # COLLISION BUFFER BETA
+        self.future_image = pygame.image.load("../img/buffer_zone.png")
+        self.rotated_future_image = self.future_image
+        self.future_rect = self.future_image.get_rect()
 
     def update(self, dt):
         # Applies seeking behavior
@@ -83,9 +85,9 @@ class Vehicle(pygame.sprite.Sprite):
         self.near_obstacles.append(pygame.mouse.get_pos())
 
         # Creates future path rect
-        self.generate_future_path_rect()
-
-
+        pivot = self.future_rect.center
+        self.rotated_future_image = pygame.transform.rotate(self.future_image, vec_angle(self.velocity))
+        self.future_rect = self.rotated_future_image.get_rect(center=pivot)
 
 
         # Pega velocidade e projeta pra alguns segundos
