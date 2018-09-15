@@ -1,4 +1,6 @@
 import pygame
+from pygame import Vector2
+
 from src.Vehicle import Vehicle
 
 
@@ -48,8 +50,8 @@ class Sim:
         # Initializates position and vehicle
         position = [self.screen_size[0] / 2, self.screen_size[1] / 2]
         vehicle = Vehicle(self.image_vehicle, position, debug=self.DEBUG)
-        vehicle.set_speed((0, 0))
-        vehicle.set_accel((0, 0))
+        vehicle.set_velocity(Vector2(0, 0))
+        vehicle.set_accel(Vector2(0, 0))
 
         self.vehicles.append(vehicle)
 
@@ -77,7 +79,7 @@ class Sim:
 
         vehicle = self.vehicles[0]
 
-        speed_text = "vSpeed: %0.2f km/h" % (vehicle.get_speed()[1] * meters_per_pixel * 3.6)
+        speed_text = "vSpeed: %0.2f km/h" % (vehicle.get_velocity()[1] * meters_per_pixel * 3.6)
         accel_text = "vAccel: %0.2f km/h" % (vehicle.get_accel()[1] * meters_per_pixel * 3.6)
 
         print(speed_text + "   " + accel_text)
