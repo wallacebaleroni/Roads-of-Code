@@ -11,6 +11,8 @@ def vec_sub(v1, v2):
 
 def vec_normalize(v):
     mag = vec_mag(v)
+    if mag == 0:
+        return [0, 0]
     return tuple((v[0] / mag, v[1] / mag))
 
 
@@ -39,7 +41,7 @@ def vec_angle(v):
 
     angle = -math.degrees(math.atan(v[1]/v[0]))
 
-    if v[0] < 0 and v[1] > 0:
+    if v[0] < 0 < v[1]:
         angle -= 180
     elif v[0] < 0 and v[1] < 0:
         angle += 180
@@ -47,4 +49,6 @@ def vec_angle(v):
 
 
 def proportional_map(n, min1, max1, min2, max2):
-    return (max2 - min2)/((max1 - min1)/(n - min1))
+    if n - min1 == 0:
+        return 0
+    return (max2 - min2) / ((max1 - min1)/(n - min1))
