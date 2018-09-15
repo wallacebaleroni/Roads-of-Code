@@ -1,5 +1,7 @@
 import pygame
-from src.Vehicle import Vehicle
+from pygame import Vector2
+
+from src.Camaro import Camaro
 
 
 class Sim:
@@ -23,12 +25,6 @@ class Sim:
         # Sets screen title
         pygame.display.set_caption("Roads of Code")
 
-        # Loads images
-        self.load_images()
-
-    def load_images(self):
-        self.image_vehicle = pygame.image.load("../img/car.png")
-
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -47,9 +43,9 @@ class Sim:
     def loop(self):
         # Initializates position and vehicle
         position = [self.screen_size[0] / 2, self.screen_size[1] / 2]
-        vehicle = Vehicle(self.image_vehicle, position, debug=self.DEBUG)
-        vehicle.set_speed((0, 0))
-        vehicle.set_accel((0, 0))
+        vehicle = Camaro(position, debug=self.DEBUG)
+        vehicle.set_velocity(Vector2(0, 0))
+        vehicle.set_accel(Vector2(0, 0))
 
         self.vehicles.append(vehicle)
 
@@ -77,7 +73,7 @@ class Sim:
 
         vehicle = self.vehicles[0]
 
-        speed_text = "vSpeed: %0.2f km/h" % (vehicle.get_speed()[1] * meters_per_pixel * 3.6)
+        speed_text = "vSpeed: %0.2f km/h" % (vehicle.get_velocity()[1] * meters_per_pixel * 3.6)
         accel_text = "vAccel: %0.2f km/h" % (vehicle.get_accel()[1] * meters_per_pixel * 3.6)
 
         print(speed_text + "   " + accel_text)
