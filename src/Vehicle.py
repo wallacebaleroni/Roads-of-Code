@@ -5,12 +5,12 @@ from src.aux_ops import *
 
 
 class Vehicle(pygame.sprite.Sprite):
-    def __init__(self, image, position, velocity=(1, 0), debug=False):
+    def __init__(self, vehicle_image, position, velocity=(1, 0), debug=False):
         pygame.sprite.Sprite.__init__(self)
 
         # Loads image
-        self.vehicle_image = image
-        self.vehicle_image_rotated = image
+        self.vehicle_image = vehicle_image
+        self.vehicle_image_rotated = self.vehicle_image
         self.vehicle_image_rect = self.vehicle_image.get_rect()
 
         # Sets debug option and initializes debug lines used to show the vectors acting on the vehicle
@@ -21,10 +21,6 @@ class Vehicle(pygame.sprite.Sprite):
         self.position = Vector2(position)
         self.velocity = Vector2(velocity)
         self.accel = Vector2(0, 0)
-
-        self.maxspeed = self.metric_to_pixel(22)
-        self.maxaccel = self.metric_to_pixel(25)
-        self.maxbrake = -self.metric_to_pixel(145)
 
         # Get vehicle dimensions
         self.vehicle_length = self.vehicle_image.get_width()
