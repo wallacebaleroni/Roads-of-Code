@@ -73,7 +73,7 @@ class Sim:
 
         vehicle = self.vehicles[0]
 
-        speed_text = "vSpeed: %0.2f km/h" % (vehicle.get_velocity()[1] * meters_per_pixel * 3.6)
-        accel_text = "vAccel: %0.2f km/h" % (vehicle.get_accel()[1] * meters_per_pixel * 3.6)
+        speed_text = "Velocity: %0.2f km/h" % (Vector2(vehicle.get_velocity()).length() * meters_per_pixel * 3.6)
+        accel_text = "Accel: %0.2f km/h" % (Vector2(vehicle.get_accel()).length() * meters_per_pixel * 3.6)
 
         print(speed_text + "   " + accel_text)
