@@ -88,7 +88,7 @@ class Vehicle(pygame.sprite.Sprite):
 
         # Calculates offset
         offset = Vector2(self.vehicle_length / 2, 0) # Starts at the front of the car
-        offset += [self.metric_to_pixel(3), 0] # Distance from front of the car
+        offset += [(self.velocity.length() / self.metric_to_pixel(5.5)) * self.vehicle_length, 0] # Distance from front of the car
 
         # Updates buffer zone rotation
         velocity_angle = self.velocity.angle_to((1,0))
@@ -166,3 +166,7 @@ class Vehicle(pygame.sprite.Sprite):
     @staticmethod
     def metric_to_pixel(n):
         return n / 0.13
+
+    @staticmethod
+    def pixel_to_metric(n):
+        return n * 0.13
