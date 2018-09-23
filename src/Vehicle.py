@@ -30,7 +30,9 @@ class Vehicle(pygame.sprite.Sprite):
         self.near_obstacles = []
 
         # Initializes collision buffer
-        self.buffer_zone_image = pygame.image.load("../img/buffer_zone.png")
+        self.buffer_zone_green = pygame.image.load("../img/buffer_zone_green.png")
+        self.buffer_zone_red = pygame.image.load("../img/buffer_zone_red.png")
+        self.buffer_zone_image = self.buffer_zone_green
         self.buffer_zone_image_rotated = self.buffer_zone_image
         self.buffer_zone_image_rect = self.buffer_zone_image.get_rect()
 
