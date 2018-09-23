@@ -112,11 +112,6 @@ class Vehicle(pygame.sprite.Sprite):
         self.accel = vec_add(self.accel, vector)
 
     def draw(self, screen):
-        # Draws debug objects
-        if self.DEBUG:
-            # Draws buffer zone
-            screen.blit(self.buffer_zone_image_rotated, self.buffer_zone_image_rect)
-
         # Draws vehicle on the screen
         screen.blit(self.vehicle_image_rotated, self.vehicle_image_rect)
 
