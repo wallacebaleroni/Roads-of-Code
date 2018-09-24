@@ -25,9 +25,6 @@ class Vehicle(GameObject):
         self.vehicle_length = self.image.get_width()
         self.vehicle_width = self.image.get_height()
 
-        # Initializes obstacle list
-        self.near_obstacles = []
-
         # Initializes collision buffer
         self.buffer_zone_green = pygame.image.load("../img/buffer_zone_green.png")
         self.buffer_zone_red = pygame.image.load("../img/buffer_zone_red.png")
@@ -38,7 +35,7 @@ class Vehicle(GameObject):
     def update(self, dt=0, neighbourhood={}):
         # Selects mouse and applies seeking behavior
         self.apply_force(self.seek(neighbourhood["mouse"].get_pos()))
-        self.brake()
+        self.brake(neighbourhood)
 
         # Updates speed and position
         self.velocity = Vector2(self.velocity[0] + self.accel[0] * dt,
@@ -66,7 +63,8 @@ class Vehicle(GameObject):
         # Calculates de desired velocity
         desired = target - self.image_rect.center
         distance = desired.length()
-        desired = desired.normalize()
+        if desired != (0, 0):
+            desired = desired.normalize()
 
         # Applies arrival behaviour
         if distance < 100:  # TODO: Parameterize min distance
@@ -83,10 +81,12 @@ class Vehicle(GameObject):
 
         return steer
 
-    def brake(self):
-        # Get nearest obstacles
-        self.near_obstacles.clear()
-        self.near_obstacles.append(pygame.mouse.get_pos())
+    def brake(self, neighbourhood):
+        # Checks collision with neighbourhood
+        if self.buffer_zone_image_rect.colliderect(neighbourhood["mouse"].image_rect):
+            self.buffer_zone_image = self.buffer_zone_red
+        else:
+            self.buffer_zone_image = self.buffer_zone_green
 
         # Calculates offset
         offset = Vector2(self.vehicle_length / 2, 0) # Starts at the front of the car
