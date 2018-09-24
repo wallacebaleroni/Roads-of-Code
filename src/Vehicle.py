@@ -88,9 +88,15 @@ class Vehicle(GameObject):
         else:
             self.buffer_zone_image = self.buffer_zone_green
 
-        # Calculates offset
+        # Calculates safe distance
+        safe_distance = (self.velocity.length() / metric_to_pixel(5.5)) * self.vehicle_length
+        if safe_distance < 1:
+            safe_distance = 1
+
+        # Calculates rotated offset
         offset = Vector2(self.vehicle_length / 2, 0) # Starts at the front of the car
-        offset += [(self.velocity.length() / metric_to_pixel(5.5)) * self.vehicle_length, 0] # Distance from front of the car
+        offset += Vector2(safe_distance, 0) / 2 # Distance from front of the car
+        self.buffer_zone_image = pygame.transform.scale(self.buffer_zone_image, (int(safe_distance), self.buffer_zone_image.get_height()))
 
         # Updates buffer zone rotation
         velocity_angle = self.velocity.angle_to((1,0))
@@ -103,12 +109,7 @@ class Vehicle(GameObject):
         # Updates buffer zone position
         self.buffer_zone_image_rect.center = self.position + rotated_offset
 
-        # Pega velocidade e projeta pra alguns segundos
-        # Talvez esses segundos tenham a ver com distancia segura
-        # Se nesses proximos segundos ele colidir com algo (no caso o mouse)
-        #   Faz torricelli pra descobrir aceleração negativa necessário pra frear
-        #   Limitar essa aceleracao pelo max brake
-        return self
+        # TODO: use Torricelli to get braking force and then limit it with maxbrake
 
     def apply_force(self, vector):
         self.accel = self.accel + Vector2(vector)
