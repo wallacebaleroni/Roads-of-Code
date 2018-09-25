@@ -8,4 +8,4 @@ The project is developed using Python 3.6 and the pygame library, so you need bo
 
 ### Acknowladgments
 
-I know I use a Camaro in the project but please don't sue me, General Motors.
+I know I use a Camaro but please don't sue me, General Motors.
