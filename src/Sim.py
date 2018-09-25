@@ -1,9 +1,9 @@
 import pygame
 from pygame import Vector2
 
-from src.metrics import *
-from src.GameObject import GameObject
-from src.Camaro import Camaro
+from metrics import *
+from GameObject import *
+from Camaro import *
 
 
 class Sim:

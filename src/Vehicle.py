@@ -1,8 +1,8 @@
 import pygame
 from pygame import Vector2
 
-from src.metrics import *
-from src.GameObject import GameObject
+from metrics import *
+from GameObject import *
 
 
 class Vehicle(GameObject):

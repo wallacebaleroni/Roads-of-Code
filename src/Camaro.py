@@ -1,7 +1,7 @@
 import pygame
 
-from src.metrics import *
-from src.Vehicle import Vehicle
+from metrics import *
+from Vehicle import *
 
 class Camaro(Vehicle):
     def __init__(self, position, velocity=(1, 0), debug=False):

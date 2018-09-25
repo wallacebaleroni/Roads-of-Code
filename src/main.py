@@ -1,4 +1,4 @@
-from src.Sim import Sim
+from Sim import *
 
 DEBUG = True
 resolution = (800, 600)
