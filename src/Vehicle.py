@@ -1,7 +1,7 @@
 import pygame
 from pygame import Vector2
 
-from src.aux_ops import *
+from aux_ops import *
 
 
 class Vehicle(pygame.sprite.Sprite):

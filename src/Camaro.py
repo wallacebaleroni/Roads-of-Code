@@ -1,6 +1,6 @@
 import pygame
 
-from src.Vehicle import Vehicle
+from Vehicle import *
 
 class Camaro(Vehicle):
     def __init__(self, position, velocity=(1, 0), debug=False):

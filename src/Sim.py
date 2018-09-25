@@ -1,7 +1,7 @@
 import pygame
 from pygame import Vector2
 
-from src.Camaro import Camaro
+from Camaro import *
 
 
 class Sim:
