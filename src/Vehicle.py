@@ -1,5 +1,6 @@
 import pygame
 from pygame import Vector2
+import math
 
 from metrics import *
 from GameObject import *
@@ -31,6 +32,11 @@ class Vehicle(GameObject):
         self.buffer_zone_image = self.buffer_zone_green
         self.buffer_zone_image_rotated = self.buffer_zone_image
         self.buffer_zone_image_rect = self.buffer_zone_image.get_rect()
+
+        # Initializes collision variables
+        self.safe_distance = metric_to_pixel(3)
+        self.collision_imminent = True
+        self.braking = None
 
     def update(self, dt=0, neighbourhood={}):
         # Selects mouse and applies seeking behavior
@@ -82,34 +88,61 @@ class Vehicle(GameObject):
         return steer
 
     def brake(self, neighbourhood):
-        # Checks collision with neighbourhood
-        if self.buffer_zone_image_rect.colliderect(neighbourhood["mouse"].image_rect):
-            self.buffer_zone_image = self.buffer_zone_red
-        else:
-            self.buffer_zone_image = self.buffer_zone_green
+        self.update_buffer_zone()
 
+        # Checks collision and calculates distance from each neighbour
+        if self.buffer_zone_image_rect.colliderect(neighbourhood["mouse"].image_rect):
+            obstacle = neighbourhood["mouse"]
+            self.collision_imminent = True
+        else:
+            self.collision_imminent = False
+            self.braking = None
+
+        # If there's an imminent collision and the braking is not yet calculated
+        if self.collision_imminent and self.braking is None:
+            # Calculates distance from obstacle
+            dist = self.get_pos() - obstacle.get_pos()
+
+            # Calculates braking
+            scalar_dist = dist.length()
+            scalar_dist -= self.safe_distance
+            braking_mag = (-self.get_velocity().length_squared()) / (2 * scalar_dist)
+
+            if math.fabs(braking_mag) > math.fabs(self.maxbrake):
+                if braking_mag < 0:
+                    braking_mag = -self.maxbrake
+                else:
+                    braking_mag = self.maxbrake
+
+            self.braking = Vector2(braking_mag, 0)
+            self.braking.rotate_ip(self.velocity.angle_to(self.braking))
+            self.braking.rotate_ip(180)
+
+        if self.braking is not None:
+            self.accel = self.braking
+
+    def update_buffer_zone(self):
         # Calculates safe distance
         safe_distance = (self.velocity.length() / metric_to_pixel(5.5)) * self.vehicle_length
         if safe_distance < 1:
             safe_distance = 1
 
         # Calculates rotated offset
-        offset = Vector2(self.vehicle_length / 2, 0) # Starts at the front of the car
-        offset += Vector2(safe_distance, 0) / 2 # Distance from front of the car
-        self.buffer_zone_image = pygame.transform.scale(self.buffer_zone_image, (int(safe_distance), self.buffer_zone_image.get_height()))
+        offset = Vector2(self.vehicle_length / 2, 0)  # Starts at the front of the car
+        offset += Vector2(safe_distance, 0) / 2  # Distance from front of the car
+        self.buffer_zone_image = pygame.transform.scale(self.buffer_zone_image,
+                                                        (int(safe_distance), self.buffer_zone_image.get_height()))
 
         # Updates buffer zone rotation
-        velocity_angle = self.velocity.angle_to((1,0))
+        velocity_angle = self.velocity.angle_to((1, 0))
         rotated_offset = offset.rotate(-velocity_angle)  # Rotate the offset vector.
 
         pivot = self.buffer_zone_image_rect.center
-        self.buffer_zone_image_rotated = pygame.transform.rotate(self.buffer_zone_image, self.velocity.angle_to((1,0)))
+        self.buffer_zone_image_rotated = pygame.transform.rotate(self.buffer_zone_image, self.velocity.angle_to((1, 0)))
         self.buffer_zone_image_rect = self.buffer_zone_image_rotated.get_rect(center=pivot)
 
         # Updates buffer zone position
         self.buffer_zone_image_rect.center = self.position + rotated_offset
-
-        # TODO: use Torricelli to get braking force and then limit it with maxbrake
 
     def apply_force(self, vector):
         self.accel = self.accel + Vector2(vector)
@@ -117,6 +150,8 @@ class Vehicle(GameObject):
     def draw(self, screen):
         # Draws debug objects
         if self.DEBUG:
+            # Selects color of buffer zone
+            self.buffer_zone_image = self.buffer_zone_red if self.collision_imminent else self.buffer_zone_green
             # Draws buffer zone
             screen.blit(self.buffer_zone_image_rotated, self.buffer_zone_image_rect)
 

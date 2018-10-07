@@ -11,4 +11,4 @@ class Camaro(Vehicle):
 
         self.maxspeed = metric_to_pixel(22)
         self.maxaccel = metric_to_pixel(25)
-        self.maxbrake = -metric_to_pixel(145)
+        self.maxbrake = metric_to_pixel(145)
