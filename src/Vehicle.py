@@ -43,7 +43,7 @@ class Vehicle(GameObject):
 
     def update(self, dt=0, neighbourhood={}):
         # Selects mouse and applies seeking behavior
-        self.apply_force(self.seek(neighbourhood["mouse"].get_pos()))
+        self.apply_accel(self.seek(neighbourhood["mouse"].get_pos()))
         self.brake(neighbourhood)
 
         # Updates speed and position
@@ -93,32 +93,32 @@ class Vehicle(GameObject):
     def brake(self, neighbourhood):
         self.update_buffer_zone()
 
-        # Checks collision and calculates distance from each neighbour
+        # Checks collision and calculates distance from the closest neighbour
+        dist = 0
         if self.buffer_zone_image_rect.colliderect(neighbourhood["mouse"].image_rect):
-            obstacle = neighbourhood["mouse"]
             self.collision_imminent = True
+            dist = self.get_pos() - neighbourhood["mouse"].get_pos()
         else:
             self.collision_imminent = False
             self.braking = None
 
         # If there's an imminent collision and the braking is not yet calculated
         if self.collision_imminent and self.braking is None:
-            # Calculates distance from obstacle
-            dist = self.get_pos() - obstacle.get_pos()
-
             # Calculates braking
             scalar_dist = dist.length()
             scalar_dist -= self.safe_distance
             braking_mag = (-self.get_velocity().length_squared()) / (2 * scalar_dist)
 
+            # Limits breaking
             if math.fabs(braking_mag) > math.fabs(self.maxbrake):
                 if braking_mag < 0:
                     braking_mag = -self.maxbrake
                 else:
                     braking_mag = self.maxbrake
 
-            self.braking = Vector2(braking_mag, 0)
-            self.braking.rotate_ip(self.velocity.angle_to(self.braking))
+            # Rotates vector to be parallel to the velocity
+            self.braking = Vector2(math.fabs(braking_mag), 0)
+            self.braking.rotate_ip(self.braking.angle_to(self.velocity))
             self.braking.rotate_ip(180)
 
         if self.braking is not None:
@@ -126,7 +126,7 @@ class Vehicle(GameObject):
 
     def update_buffer_zone(self):
         # Calculates safe distance
-        safe_distance = (self.velocity.length() / metric_to_pixel(5.5)) * self.vehicle_length
+        safe_distance = self.safe_distance + (self.velocity.length() / metric_to_pixel(5.5)) * self.vehicle_length
         if safe_distance < 1:
             safe_distance = 1
 
@@ -147,7 +147,7 @@ class Vehicle(GameObject):
         # Updates buffer zone position
         self.buffer_zone_image_rect.center = self.position + rotated_offset
 
-    def apply_force(self, vector):
+    def apply_accel(self, vector):
         self.accel = self.accel + Vector2(vector)
 
     def draw(self, screen):
@@ -182,11 +182,11 @@ class Vehicle(GameObject):
             pygame.draw.rect(pygame.display.get_surface(), (30, 250, 70), self.image_rect, 1)
 
             # Draws metrics
-            velocityText = self.textFont.render("Velocity: %0.2f km/h" % (pixel_to_metric(Vector2(self.get_velocity()).length()) * 3.6), False, (255, 255, 255))
-            accelText = self.textFont.render("Accel: %0.2f km/h" % (pixel_to_metric(Vector2(self.get_accel()).length()) * 3.6), False, (255, 255, 255))
+            velocity_text = self.textFont.render("Velocity: %0.2f km/h" % (pixel_to_metric(Vector2(self.get_velocity()).length()) * 3.6), False, (255, 255, 255))
+            accel_text = self.textFont.render("Accel: %0.2f km/h" % (pixel_to_metric(Vector2(self.get_accel()).length()) * 3.6), False, (255, 255, 255))
 
-            screen.blit(velocityText, Vector2(screen.get_size()) - Vector2(velocityText.get_size()))
-            screen.blit(accelText, Vector2(screen.get_size()) - Vector2((accelText.get_width(), 2 * accelText.get_height())))
+            screen.blit(velocity_text, Vector2(screen.get_size()) - Vector2(velocity_text.get_size()))
+            screen.blit(accel_text, Vector2(screen.get_size()) - Vector2((accel_text.get_width(), 2 * accel_text.get_height())))
 
         self.debug_lines.clear()
 
@@ -203,7 +203,11 @@ class Vehicle(GameObject):
         self.velocity = speed
 
     def get_pos(self):
-        return Vector2(self.image_rect.center[0], self.image_rect.bottom)
+        # Returns the position of the front of the vehicle
+        front_distance = self.image.get_width() / 2
+        relative_vehicle_front = Vector2(front_distance, 0).rotate(Vector2(1,0).angle_to(self.velocity))
+
+        return self.image_rect.center + relative_vehicle_front
 
     def get_size(self):
         return self.image.get_size()
