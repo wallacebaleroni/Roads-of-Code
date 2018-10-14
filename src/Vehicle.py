@@ -1,43 +1,50 @@
 import pygame
 from pygame import Vector2
+import math
 
-from aux_ops import *
+from metrics import *
+from GameObject import *
 
 
-class Vehicle(pygame.sprite.Sprite):
-    def __init__(self, vehicle_image, position, velocity=(1, 0), debug=False):
-        pygame.sprite.Sprite.__init__(self)
+class Vehicle(GameObject):
+    def __init__(self, image, position=Vector2(0, 0), velocity=Vector2(1, 0), debug=False):
+        GameObject.__init__(self, image, position)
 
-        # Loads image
-        self.vehicle_image = vehicle_image
-        self.vehicle_image_rotated = self.vehicle_image
-        self.vehicle_image_rect = self.vehicle_image.get_rect()
+        # Loads image (image and image_rect created on super class)
+        self.image_rotated = self.image
 
         # Sets debug option and initializes debug lines used to show the vectors acting on the vehicle
         self.DEBUG = debug
+        if self.DEBUG:
+            pygame.font.init()
+            self.textFont = pygame.font.SysFont('Arial', 15)
         self.debug_lines = []
 
-        # Basic forces
-        self.position = Vector2(position)
+        # Basic forces (position created on super class)
         self.velocity = Vector2(velocity)
         self.accel = Vector2(0, 0)
+        self.debug_accel = self.accel
 
         # Get vehicle dimensions
-        self.vehicle_length = self.vehicle_image.get_width()
-        self.vehicle_width = self.vehicle_image.get_height()
-
-        # Initializes obstacle list
-        self.near_obstacles = []
+        self.vehicle_length = self.image.get_width()
+        self.vehicle_width = self.image.get_height()
 
         # Initializes collision buffer
-        self.buffer_zone_image = pygame.image.load("../img/buffer_zone.png")
+        self.buffer_zone_green = pygame.image.load("../img/buffer_zone_green.png")
+        self.buffer_zone_red = pygame.image.load("../img/buffer_zone_red.png")
+        self.buffer_zone_image = self.buffer_zone_green
         self.buffer_zone_image_rotated = self.buffer_zone_image
         self.buffer_zone_image_rect = self.buffer_zone_image.get_rect()
 
-    def update(self, dt):
-        # Applies seeking behavior
-        self.apply_force(self.seek(pygame.mouse.get_pos()))
-        self.brake()
+        # Initializes collision variables
+        self.safe_distance = metric_to_pixel(3)
+        self.collision_imminent = True
+        self.braking = None
+
+    def update(self, dt=0, neighbourhood={}):
+        # Selects mouse and applies seeking behavior
+        self.apply_accel(self.seek(neighbourhood["mouse"].get_pos()))
+        self.brake(neighbourhood)
 
         # Updates speed and position
         self.velocity = Vector2(self.velocity[0] + self.accel[0] * dt,
@@ -45,100 +52,146 @@ class Vehicle(pygame.sprite.Sprite):
         self.position = Vector2(self.position[0] + self.velocity[0] * dt,
                                 self.position[1] + self.velocity[1] * dt)
 
-        # Rotates arround center acording to velocity
-        pivot = self.vehicle_image_rect.center
-        self.vehicle_image_rotated = pygame.transform.rotate(self.vehicle_image, vec_angle(self.velocity))
-        self.vehicle_image_rect = self.vehicle_image_rotated.get_rect(center=pivot)
+        # Rotates around center according to velocity
+        pivot = self.image_rect.center
+        self.image_rotated = pygame.transform.rotate(self.image, self.velocity.angle_to((1, 0)))
+        self.image_rect = self.image_rotated.get_rect(center=pivot)
 
         # Moves the vehicle to the right place
-        self.vehicle_image_rect.center = self.position
+        self.image_rect.center = self.position
 
         # Append debug lines
         self.debug_lines.append(self.velocity)
         self.debug_lines.append(self.accel)
 
-        # Resets acceleration
-        self.accel = (0, 0)
+        # Saves and resets acceleration
+        self.debug_accel = self.accel
+        self.accel = Vector2(0, 0)
 
     def seek(self, target):
         # Calculates de desired velocity
-        desired = vec_sub(target, self.vehicle_image_rect.center)
-        distance = vec_mag(desired)
-        desired = vec_normalize(desired)
+        desired = target - self.image_rect.center
+        distance = desired.length()
+        if desired != (0, 0):
+            desired = desired.normalize()
 
         # Applies arrival behaviour
         if distance < 100:  # TODO: Parameterize min distance
-            desired = vec_mult_n(desired, proportional_map(distance, 0, 100, 0, self.maxspeed))
+            desired = desired * proportional_map(distance, 0, 100, 0, self.maxspeed)
         else:
-            desired = vec_mult_n(desired, self.maxspeed)
+            desired = desired * self.maxspeed
 
         # Add desired vector to debug lines
         self.debug_lines.append(desired)
 
         # Calculates steer accel
-        steer = vec_sub(desired, self.velocity)
-        steer = vec_limit(steer, 25)
+        steer = desired - self.velocity
+        steer.scale_to_length(25)
 
         return steer
 
-    def brake(self):
-        # Get nearest obstacles
-        self.near_obstacles.clear()
-        self.near_obstacles.append(pygame.mouse.get_pos())
+    def brake(self, neighbourhood):
+        self.update_buffer_zone()
 
-        # Calculates offset
-        offset = Vector2(self.vehicle_length / 2, 0) # Starts at the front of the car
-        offset += [self.metric_to_pixel(3), 0] # Distance from front of the car
+        # Checks collision and calculates distance from the closest neighbour
+        dist = 0
+        if self.buffer_zone_image_rect.colliderect(neighbourhood["mouse"].image_rect):
+            self.collision_imminent = True
+            dist = self.get_pos() - neighbourhood["mouse"].get_pos()
+        else:
+            self.collision_imminent = False
+            self.braking = None
+
+        # If there's an imminent collision and the braking is not yet calculated
+        if self.collision_imminent and self.braking is None:
+            # Calculates braking
+            scalar_dist = dist.length()
+            scalar_dist -= self.safe_distance
+            braking_mag = (-self.get_velocity().length_squared()) / (2 * scalar_dist)
+
+            # Limits breaking
+            if math.fabs(braking_mag) > math.fabs(self.maxbrake):
+                if braking_mag < 0:
+                    braking_mag = -self.maxbrake
+                else:
+                    braking_mag = self.maxbrake
+
+            # Rotates vector to be parallel to the velocity
+            self.braking = Vector2(math.fabs(braking_mag), 0)
+            self.braking.rotate_ip(self.braking.angle_to(self.velocity))
+            self.braking.rotate_ip(180)
+
+        if self.braking is not None:
+            self.accel = self.braking
+
+    def update_buffer_zone(self):
+        # Calculates safe distance
+        safe_distance = self.safe_distance + (self.velocity.length() / metric_to_pixel(5.5)) * self.vehicle_length
+        if safe_distance < 1:
+            safe_distance = 1
+
+        # Calculates rotated offset
+        offset = Vector2(self.vehicle_length / 2, 0)  # Starts at the front of the car
+        offset += Vector2(safe_distance, 0) / 2  # Distance from front of the car
+        self.buffer_zone_image = pygame.transform.scale(self.buffer_zone_image,
+                                                        (int(safe_distance), self.buffer_zone_image.get_height()))
 
         # Updates buffer zone rotation
-        velocity_angle = self.velocity.angle_to((1,0))
+        velocity_angle = self.velocity.angle_to((1, 0))
         rotated_offset = offset.rotate(-velocity_angle)  # Rotate the offset vector.
 
         pivot = self.buffer_zone_image_rect.center
-        self.buffer_zone_image_rotated = pygame.transform.rotate(self.buffer_zone_image, vec_angle(self.velocity))
+        self.buffer_zone_image_rotated = pygame.transform.rotate(self.buffer_zone_image, self.velocity.angle_to((1, 0)))
         self.buffer_zone_image_rect = self.buffer_zone_image_rotated.get_rect(center=pivot)
 
         # Updates buffer zone position
         self.buffer_zone_image_rect.center = self.position + rotated_offset
 
-        # Pega velocidade e projeta pra alguns segundos
-        # Talvez esses segundos tenham a ver com distancia segura
-        # Se nesses proximos segundos ele colidir com algo (no caso o mouse)
-        #   Faz torricelli pra descobrir aceleração negativa necessário pra frear
-        #   Limitar essa aceleracao pelo max brake
-        return self
-
-    def apply_force(self, vector):
-        self.accel = vec_add(self.accel, vector)
+    def apply_accel(self, vector):
+        self.accel = self.accel + Vector2(vector)
 
     def draw(self, screen):
+        # Draws debug objects
+        if self.DEBUG:
+            # Selects color of buffer zone
+            self.buffer_zone_image = self.buffer_zone_red if self.collision_imminent else self.buffer_zone_green
+            # Draws buffer zone
+            screen.blit(self.buffer_zone_image_rotated, self.buffer_zone_image_rect)
+
         # Draws vehicle on the screen
-        screen.blit(self.vehicle_image_rotated, self.vehicle_image_rect)
+        screen.blit(self.image_rotated, self.image_rect)
 
         # Draws more debug objects
         if self.DEBUG:
             # Draws debug lines
             # Desired
             pygame.draw.line(pygame.display.get_surface(), (255, 0, 0),  # red
-                             self.vehicle_image_rect.center,
-                             vec_add(self.vehicle_image_rect.center, self.debug_lines[0]), 2)
+                             self.image_rect.center,
+                             self.image_rect.center + self.debug_lines[0], 2)
             # Speed
             pygame.draw.line(pygame.display.get_surface(), (0, 255, 0),  # green
-                             self.vehicle_image_rect.center,
-                             vec_add(self.vehicle_image_rect.center, self.debug_lines[1]), 2)
+                             self.image_rect.center,
+                             self.image_rect.center + self.debug_lines[1], 2)
             # Accel
             pygame.draw.line(pygame.display.get_surface(), (0, 0, 255),  # blue
-                             self.vehicle_image_rect.center,
-                             vec_add(self.vehicle_image_rect.center, self.debug_lines[2]), 2)
+                             self.image_rect.center,
+                             self.image_rect.center + self.debug_lines[2], 2)
 
             # Draws rotation indicators
-            pygame.draw.circle(pygame.display.get_surface(), (255, 250, 70), self.vehicle_image_rect.center, 3)
-            pygame.draw.rect(pygame.display.get_surface(), (30, 250, 70), self.vehicle_image_rect, 1)
+            pygame.draw.circle(pygame.display.get_surface(), (255, 250, 70), self.image_rect.center, 3)
+            pygame.draw.rect(pygame.display.get_surface(), (30, 250, 70), self.image_rect, 1)
+
+            # Draws metrics
+            velocity_text = self.textFont.render("Velocity: %0.2f km/h" % (pixel_to_metric(Vector2(self.get_velocity()).length()) * 3.6), False, (255, 255, 255))
+            accel_text = self.textFont.render("Accel: %0.2f km/h" % (pixel_to_metric(Vector2(self.get_accel()).length()) * 3.6), False, (255, 255, 255))
+
+            screen.blit(velocity_text, Vector2(screen.get_size()) - Vector2(velocity_text.get_size()))
+            screen.blit(accel_text, Vector2(screen.get_size()) - Vector2((accel_text.get_width(), 2 * accel_text.get_height())))
 
         self.debug_lines.clear()
 
     def get_accel(self):
-        return self.accel
+        return self.debug_accel
 
     def set_accel(self, accel):
         self.accel = accel
@@ -150,14 +203,11 @@ class Vehicle(pygame.sprite.Sprite):
         self.velocity = speed
 
     def get_pos(self):
-        return self.vehicle_image_rect.center[0], self.vehicle_image_rect.bottom
+        # Returns the position of the front of the vehicle
+        front_distance = self.image.get_width() / 2
+        relative_vehicle_front = Vector2(front_distance, 0).rotate(Vector2(1,0).angle_to(self.velocity))
 
-    def set_pos(self, pos):
-        self.vehicle_image_rect.center = (pos[0], pos[1])
+        return self.image_rect.center + relative_vehicle_front
 
     def get_size(self):
-        return self.vehicle_image.get_size()
-
-    @staticmethod
-    def metric_to_pixel(n):
-        return n / 0.13
+        return self.image.get_size()
