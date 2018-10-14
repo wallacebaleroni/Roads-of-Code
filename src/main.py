@@ -1,6 +1,6 @@
 from Sim import *
 
-DEBUG = False
+DEBUG = True
 resolution = (800, 600)
 
 
