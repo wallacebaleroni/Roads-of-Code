@@ -82,14 +82,3 @@ class Sim:
             time_final = pygame.time.get_ticks() / 1000
             dt = time_final - time_initial
             time_initial = time_final
-
-            if self.DEBUG:
-                self.get_metrics()
-
-    def get_metrics(self):
-        vehicle = self.vehicles[0]
-
-        speed_text = "Velocity: %0.2f km/h" % (pixel_to_metric(Vector2(vehicle.get_velocity()).length()) * 3.6)
-        accel_text = "Accel: %0.2f km/h" % (pixel_to_metric(Vector2(vehicle.get_accel()).length()) * 3.6)
-
-        print(speed_text + "   " + accel_text)

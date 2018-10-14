@@ -15,6 +15,9 @@ class Vehicle(GameObject):
 
         # Sets debug option and initializes debug lines used to show the vectors acting on the vehicle
         self.DEBUG = debug
+        if self.DEBUG:
+            pygame.font.init()
+            self.textFont = pygame.font.SysFont('Arial', 15)
         self.debug_lines = []
 
         # Basic forces (position created on super class)
@@ -177,6 +180,13 @@ class Vehicle(GameObject):
             # Draws rotation indicators
             pygame.draw.circle(pygame.display.get_surface(), (255, 250, 70), self.image_rect.center, 3)
             pygame.draw.rect(pygame.display.get_surface(), (30, 250, 70), self.image_rect, 1)
+
+            # Draws metrics
+            velocityText = self.textFont.render("Velocity: %0.2f km/h" % (pixel_to_metric(Vector2(self.get_velocity()).length()) * 3.6), False, (255, 255, 255))
+            accelText = self.textFont.render("Accel: %0.2f km/h" % (pixel_to_metric(Vector2(self.get_accel()).length()) * 3.6), False, (255, 255, 255))
+
+            screen.blit(velocityText, Vector2(screen.get_size()) - Vector2(velocityText.get_size()))
+            screen.blit(accelText, Vector2(screen.get_size()) - Vector2((accelText.get_width(), 2 * accelText.get_height())))
 
         self.debug_lines.clear()
 
