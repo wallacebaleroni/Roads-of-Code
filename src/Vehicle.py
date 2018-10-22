@@ -76,16 +76,26 @@ class Vehicle(GameObject):
 
         # Applies arrival behaviour
         if distance < 100:  # TODO: Parameterize min distance
-            desired = desired * proportional_map(distance, 0, 100, 0, self.maxspeed)
+            desired = desired * proportional_map(distance, 0, 100, 0, self.max_velocity)
         else:
-            desired = desired * self.maxspeed
+            desired = desired * self.max_velocity
 
         # Add desired vector to debug lines
         self.debug_lines.append(desired)
 
         # Calculates steer accel
         steer = desired - self.velocity
-        steer.scale_to_length(25)
+        steer.scale_to_length(pixel_to_metric(self.max_acceleration))
+
+        steer_angle = steer.angle_to(self.velocity)
+        sx = steer[0]
+        sy = steer[1]
+        if abs(steer_angle) > abs(self.max_steer_angle):
+            if steer_angle < 0:
+                steer[0] = steer[1] / math.tan(math.radians(-self.max_steer_angle))
+            else:
+                steer[0] = steer[1] / math.tan(math.radians(self.max_steer_angle))
+            print("(%d,%d) %d° -(%d)-> (%d,%d) %d°" % (sx, sy, steer_angle, self.max_steer_angle, steer[0], steer[1], steer.angle_to(self.velocity)))
 
         return steer
 

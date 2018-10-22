@@ -13,3 +13,5 @@ class Camaro(Vehicle):
         self.max_velocity = metric_to_pixel(22)
         self.max_acceleration = metric_to_pixel(25)
         self.max_brake = metric_to_pixel(145)
+
+        self.max_steer_angle = 10
