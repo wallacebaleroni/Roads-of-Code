@@ -109,14 +109,14 @@ class Vehicle(GameObject):
             braking_mag = (-self.get_velocity().length_squared()) / (2 * scalar_dist)
 
             # Limits breaking
-            if math.fabs(braking_mag) > math.fabs(self.maxbrake):
+            if abs(braking_mag) > abs(self.max_brake):
                 if braking_mag < 0:
-                    braking_mag = -self.maxbrake
+                    braking_mag = -self.max_brake
                 else:
-                    braking_mag = self.maxbrake
+                    braking_mag = self.max_brake
 
             # Rotates vector to be parallel to the velocity
-            self.braking = Vector2(math.fabs(braking_mag), 0)
+            self.braking = Vector2(abs(braking_mag), 0)
             self.braking.rotate_ip(self.braking.angle_to(self.velocity))
             self.braking.rotate_ip(180)
 
