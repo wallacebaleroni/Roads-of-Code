@@ -15,9 +15,8 @@ class Vehicle(GameObject):
 
         # Sets debug option and initializes debug lines used to show the vectors acting on the vehicle
         self.DEBUG = debug
-        if self.DEBUG:
-            pygame.font.init()
-            self.textFont = pygame.font.SysFont('Arial', 15)
+        pygame.font.init()
+        self.textFont = pygame.font.SysFont('Arial', 15)
         self.debug_lines = []
 
         # Basic forces (position created on super class)
@@ -189,6 +188,12 @@ class Vehicle(GameObject):
             screen.blit(accel_text, Vector2(screen.get_size()) - Vector2((accel_text.get_width(), 2 * accel_text.get_height())))
 
         self.debug_lines.clear()
+
+    def toggle_debug(self):
+        if self.DEBUG:
+            self.DEBUG = False
+        else:
+            self.DEBUG = True
 
     def get_accel(self):
         return self.debug_accel
