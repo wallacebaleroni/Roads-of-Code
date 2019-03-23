@@ -200,10 +200,7 @@ class Vehicle(GameObject):
         self.debug_lines.clear()
 
     def toggle_debug(self):
-        if self.DEBUG:
-            self.DEBUG = False
-        else:
-            self.DEBUG = True
+        self.DEBUG = not self.DEBUG
 
     def get_accel(self):
         return self.debug_accel

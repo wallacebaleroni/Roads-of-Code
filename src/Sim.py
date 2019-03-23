@@ -29,7 +29,10 @@ class Sim:
         self.dt_multiplier = 1
         self.dt_mult_pace = 0.25
         self.dt_step = False
-        self.dt_manual = 0.25
+        self.dt_manual_max = 0.5
+        self.dt_manual = self.dt_manual_max
+        self.dt_manual_pace = 0.1
+        self.pace_changed = False
 
         # Creates running flag
         self.run = True
@@ -53,19 +56,30 @@ class Sim:
             if event.type == pygame.QUIT:
                 self.run = False
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_MINUS:
-                    self.dt_multiplier -= self.dt_mult_pace
-                    if self.dt_multiplier < 0:
-                        self.dt_multiplier = 0
-                if event.key == pygame.K_EQUALS:
-                    self.dt_multiplier += self.dt_mult_pace
-                if event.key == pygame.K_p:
+                if event.key == pygame.K_MINUS:  # Key -
+                    # Decreases the lenght in time of each pace until zero
+                    if self.dt_multiplier > 0:
+                        self.dt_multiplier -= self.dt_mult_pace
+                    # After reaching zero, the manual pace will be decreased until zero
+                    else:
+                        if self.dt_manual > 0:
+                            self.dt_manual -= self.dt_manual_pace
+                    self.pace_changed = True
+                if event.key == pygame.K_EQUALS:  # Key +
+                    if self.dt_manual < self.dt_manual_max:
+                        self.dt_manual += self.dt_manual_pace
+                    else:
+                        self.dt_multiplier += self.dt_mult_pace
+                    self.pace_changed = True
+                if event.key == pygame.K_p:  # Key p
                     self.dt_step = True
-                if event.key == pygame.K_BACKQUOTE:
+                if event.key == pygame.K_BACKQUOTE:  # Key "
                     self.toggle_debug()
 
     def toggle_debug(self):
-        # Toggle debug for every debuggable object
+        # Toggle debug for itself and every debuggable object
+        self.DEBUG = not self.DEBUG
+
         for vehicle in self.vehicles:
             vehicle.toggle_debug()
 
