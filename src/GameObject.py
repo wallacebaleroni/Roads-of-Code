@@ -6,7 +6,8 @@ class GameObject(pygame.sprite.Sprite):
     def __init__(self, image, position=Vector2(0,0)):
         pygame.sprite.Sprite.__init__(self)
 
-        # Sets initial position
+        # Stores and sets initial position
+        self.initial_position = position
         self.position = position
 
         # Initializes image

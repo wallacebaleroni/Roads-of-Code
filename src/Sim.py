@@ -75,6 +75,12 @@ class Sim:
                     self.dt_step = True
                 if event.key == pygame.K_BACKQUOTE:  # Key "
                     self.toggle_debug()
+                if event.key == pygame.K_r:  # Key r
+                    self.reset_sim()
+
+    def reset_sim(self):
+        for vehicle in self.vehicles:
+            vehicle.reset()
 
     def toggle_debug(self):
         # Toggle debug for itself and every debuggable object

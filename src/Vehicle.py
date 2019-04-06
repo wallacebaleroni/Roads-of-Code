@@ -199,9 +199,6 @@ class Vehicle(GameObject):
 
         self.debug_lines.clear()
 
-    def toggle_debug(self):
-        self.DEBUG = not self.DEBUG
-
     def get_accel(self):
         return self.debug_accel
 
@@ -217,9 +214,20 @@ class Vehicle(GameObject):
     def get_pos(self):
         # Returns the position of the front of the vehicle
         front_distance = self.image.get_width() / 2
-        relative_vehicle_front = Vector2(front_distance, 0).rotate(Vector2(1,0).angle_to(self.velocity))
+        relative_vehicle_front = Vector2(front_distance, 0).rotate(Vector2(1, 0).angle_to(self.velocity))
 
         return self.image_rect.center + relative_vehicle_front
 
+    def set_pos(self, position):
+        self.position = position
+
     def get_size(self):
         return self.image.get_size()
+
+    def toggle_debug(self):
+        self.DEBUG = not self.DEBUG
+
+    def reset(self):
+        self.set_pos(self.initial_position)
+        self.set_velocity(Vector2(0, 0))
+        self.set_accel(Vector2(0, 0))
