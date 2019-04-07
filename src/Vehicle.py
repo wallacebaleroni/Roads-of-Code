@@ -87,16 +87,6 @@ class Vehicle(GameObject):
         steer = desired - self.velocity
         steer.scale_to_length(pixel_to_metric(self.max_acceleration))
 
-        steer_angle = steer.angle_to(self.velocity)
-        sx = steer[0]
-        sy = steer[1]
-        if abs(steer_angle) > abs(self.max_steer_angle):
-            if steer_angle < 0:
-                steer[0] = steer[1] / math.tan(math.radians(-self.max_steer_angle))
-            else:
-                steer[0] = steer[1] / math.tan(math.radians(self.max_steer_angle))
-            print("(%d,%d) %d° -(%d)-> (%d,%d) %d°" % (sx, sy, steer_angle, self.max_steer_angle, steer[0], steer[1], steer.angle_to(self.velocity)))
-
         return steer
 
     def brake(self, neighbourhood):
