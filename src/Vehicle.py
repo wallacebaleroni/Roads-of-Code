@@ -1,8 +1,7 @@
 import pygame
 from pygame import Vector2
-import math
 
-from metrics import *
+from util import *
 from GameObject import *
 
 
@@ -42,7 +41,7 @@ class Vehicle(GameObject):
 
     def update(self, dt=0, neighbourhood={}):
         # Selects mouse and applies seeking behavior
-        self.apply_accel(self.seek(neighbourhood["mouse"].get_pos()))
+        self.apply_accel(self.seek(neighbourhood["mouse"][0].get_pos()))
         self.brake(neighbourhood)
 
         # Updates speed and position
@@ -94,9 +93,9 @@ class Vehicle(GameObject):
 
         # Checks collision and calculates distance from the closest neighbour
         dist = 0
-        if self.buffer_zone_image_rect.colliderect(neighbourhood["mouse"].image_rect):
+        if self.buffer_zone_image_rect.colliderect(neighbourhood['mouse'][0].image_rect):
             self.collision_imminent = True
-            dist = self.get_pos() - neighbourhood["mouse"].get_pos()
+            dist = self.get_pos() - neighbourhood['mouse'][0].get_pos()
         else:
             self.collision_imminent = False
             self.braking = None

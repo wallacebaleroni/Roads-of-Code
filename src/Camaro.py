@@ -1,6 +1,6 @@
 import pygame
 
-from metrics import *
+from util import *
 from Vehicle import *
 
 class Camaro(Vehicle):

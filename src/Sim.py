@@ -1,21 +1,19 @@
 import pygame
 from pygame import Vector2
 
-from metrics import *
+from util import *
 from GameObject import *
+from Vehicle import *
 from Camaro import *
 
 
 class Sim:
-    interval = 0
-
     def __init__(self, size):
         # Initializes pygame
         pygame.init()
 
         # Initializes game variables
         self.DEBUG = False
-        self.vehicles = []
 
         # Initializes screen
         self.screen = pygame.display.set_mode(size)
@@ -40,16 +38,31 @@ class Sim:
         # Creates mouse object
         self.mouse = GameObject(pygame.image.load("../img/dot.png"))
 
-        # Creates tracked objects dict
-        self.tracked_objects = {'vehicles': self.vehicles, 'mouse': self.mouse}
+        # Creates game objects dict
+        self.game_objects = {'vehicles': [], 'mouse': [self.mouse]}
 
+        # Initializes centered game object
+        self.tracking_game_object = None
+
+        # Loads initial game objects
+        self.load_scenary()
+
+    def load_scenary(self):
         # Initializes single vehicle
         position = Vector2(self.screen_size[0] / 2, self.screen_size[1] / 2)
         vehicle = Camaro(position, debug=self.DEBUG)
         vehicle.set_velocity(Vector2(0, 0))
         vehicle.set_accel(Vector2(0, 0))
 
-        self.vehicles.append(vehicle)
+        self.tracking_game_object = vehicle
+        self.game_objects['vehicles'].append(vehicle)
+
+        position = Vector2(300, 300)
+        vehicle = Camaro(position, debug=self.DEBUG)
+        vehicle.set_velocity(Vector2(0, 0))
+        vehicle.set_accel(Vector2(0, 0))
+
+        self.game_objects['vehicles'].append(vehicle)
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -79,14 +92,14 @@ class Sim:
                     self.reset_sim()
 
     def reset_sim(self):
-        for vehicle in self.vehicles:
+        for vehicle in self.game_objects['vehicles']:
             vehicle.reset()
 
     def toggle_debug(self):
         # Toggle debug for itself and every debuggable object
         self.DEBUG = not self.DEBUG
 
-        for vehicle in self.vehicles:
+        for vehicle in self.game_objects['vehicles']:
             vehicle.toggle_debug()
 
     def update(self):
@@ -98,8 +111,12 @@ class Sim:
         self.mouse.update()
 
         # Updates vehicles
-        for vehicle in self.vehicles:
-            vehicle.update(dt, self.tracked_objects)
+        for vehicle in self.game_objects['vehicles']:
+            vehicle.update(dt, self.game_objects)
+        print(self.game_objects['vehicles'][0].get_pos())
+        print(self.game_objects['vehicles'][1].get_pos())
+        # Updates background
+        self.update_background()
 
     def update_dt(self):
         # Updates dt
@@ -116,15 +133,27 @@ class Sim:
 
         return dt
 
+    def update_background(self):
+        #return
+        if self.tracking_game_object is not None:
+            center_offset = self.tracking_game_object.position - self.screen_size
+
+            for key in self.game_objects.keys():
+                if key == 'vehicles':
+                    for vehicle in self.game_objects[key]:
+                        if vehicle != self.tracking_game_object:
+                            vehicle.set_pos(vehicle.get_pos() - center_offset)
+
     def draw(self):
         # Draws background
         self.screen.fill((0, 0, 0))
 
         # Draws mouse
-        self.mouse.draw(self.screen)
+        if self.DEBUG:
+            self.game_objects['mouse'][0].draw(self.screen)
 
         # Draws vehicles
-        for vehicle in self.vehicles:
+        for vehicle in self.game_objects['vehicles']:
             vehicle.draw(self.screen)
 
     def loop(self):
