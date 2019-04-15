@@ -3,12 +3,16 @@ from pygame import Vector2
 
 
 class GameObject(pygame.sprite.Sprite):
-    def __init__(self, image, position=Vector2(0,0)):
+    def __init__(self, image, position=Vector2(0, 0), debug=False):
         pygame.sprite.Sprite.__init__(self)
+
+        # Sets debug option
+        self.DEBUG = debug
 
         # Stores and sets initial position
         self.initial_position = position
         self.position = position
+        self.screen_pos = position
 
         # Initializes image
         self.image = image

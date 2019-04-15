@@ -5,6 +5,7 @@ from util import *
 from GameObject import *
 from Vehicle import *
 from Camaro import *
+from Mouse import *
 
 
 class Sim:
@@ -36,10 +37,10 @@ class Sim:
         self.run = True
 
         # Creates mouse object
-        self.mouse = GameObject(pygame.image.load("../img/dot.png"))
+        mouse = Mouse(pygame.image.load("../img/dot.png"))
 
         # Creates game objects dict
-        self.game_objects = {'vehicles': [], 'mouse': [self.mouse]}
+        self.game_objects = {'vehicles': [], 'mouse': [mouse]}
 
         # Initializes centered game object
         self.tracking_game_object = None
@@ -61,8 +62,21 @@ class Sim:
         vehicle = Camaro(position, debug=self.DEBUG)
         vehicle.set_velocity(Vector2(0, 0))
         vehicle.set_accel(Vector2(0, 0))
+        vehicle.max_velocity = 1
 
         self.game_objects['vehicles'].append(vehicle)
+
+    def loop(self):
+        # Initializes time variables
+        self.last_time = pygame.time.get_ticks() / 1000
+
+        while self.run:
+            self.handle_events()
+
+            self.update()
+            self.draw()
+
+            pygame.display.flip()
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -90,31 +104,20 @@ class Sim:
                     self.toggle_debug()
                 if event.key == pygame.K_r:  # Key r
                     self.reset_sim()
-
-    def reset_sim(self):
-        for vehicle in self.game_objects['vehicles']:
-            vehicle.reset()
-
-    def toggle_debug(self):
-        # Toggle debug for itself and every debuggable object
-        self.DEBUG = not self.DEBUG
-
-        for vehicle in self.game_objects['vehicles']:
-            vehicle.toggle_debug()
+                if event.key == pygame.K_ESCAPE:
+                    self.run = False
 
     def update(self):
         # Gets dt
         dt = self.update_dt()
 
         # Updates mouse object
-        self.mouse.set_pos(pygame.mouse.get_pos())
-        self.mouse.update()
+        self.game_objects['mouse'][0].update()
 
         # Updates vehicles
         for vehicle in self.game_objects['vehicles']:
             vehicle.update(dt, self.game_objects)
-        print(self.game_objects['vehicles'][0].get_pos())
-        print(self.game_objects['vehicles'][1].get_pos())
+
         # Updates background
         self.update_background()
 
@@ -134,15 +137,20 @@ class Sim:
         return dt
 
     def update_background(self):
-        #return
         if self.tracking_game_object is not None:
-            center_offset = self.tracking_game_object.position - self.screen_size
+            center_offset = self.tracking_game_object.get_pos() - [self.screen_size[0], self.screen_size[1]]
 
-            for key in self.game_objects.keys():
-                if key == 'vehicles':
-                    for vehicle in self.game_objects[key]:
-                        if vehicle != self.tracking_game_object:
-                            vehicle.set_pos(vehicle.get_pos() - center_offset)
+            # Mouse
+            mouse = self.game_objects['mouse'][0]
+            tracked_distance = self.tracking_game_object.screen_pos - mouse.screen_pos
+            mouse.set_pos(self.tracking_game_object.position + tracked_distance)
+
+            # Vehicles
+            for vehicle in self.game_objects['vehicles']:
+                if vehicle != self.tracking_game_object:
+                    vehicle.screen_pos = (vehicle.get_pos() - center_offset)
+                else:
+                    vehicle.screen_pos = Vector2(self.screen_size[0] / 2, self.screen_size[1] / 2)
 
     def draw(self):
         # Draws background
@@ -156,14 +164,14 @@ class Sim:
         for vehicle in self.game_objects['vehicles']:
             vehicle.draw(self.screen)
 
-    def loop(self):
-        # Initializes time variables
-        self.last_time = pygame.time.get_ticks() / 1000
+    def reset_sim(self):
+        for vehicle in self.game_objects['vehicles']:
+            vehicle.reset()
 
-        while self.run:
-            self.handle_events()
+    def toggle_debug(self):
+        # Toggle debug for itself and every debuggable object
+        self.DEBUG = not self.DEBUG
 
-            self.update()
-            self.draw()
-
-            pygame.display.flip()
+        for key in self.game_objects:
+            for game_object in self.game_objects[key]:
+                game_object.toggle_debug()

@@ -7,13 +7,12 @@ from GameObject import *
 
 class Vehicle(GameObject):
     def __init__(self, image, position=Vector2(0, 0), velocity=Vector2(1, 0), debug=False):
-        GameObject.__init__(self, image, position)
+        GameObject.__init__(self, image, position, debug)
 
         # Loads image (image and image_rect created on super class)
         self.image_rotated = self.image
 
         # Sets debug option and initializes debug lines used to show the vectors acting on the vehicle
-        self.DEBUG = debug
         pygame.font.init()
         self.textFont = pygame.font.SysFont('Arial', 15)
         self.debug_lines = []
@@ -49,14 +48,14 @@ class Vehicle(GameObject):
                                 self.velocity[1] + self.accel[1] * dt)
         self.position = Vector2(self.position[0] + self.velocity[0] * dt,
                                 self.position[1] + self.velocity[1] * dt)
-
+        print(self.position, neighbourhood['mouse'][0].get_pos())
         # Rotates around center according to velocity
         pivot = self.image_rect.center
         self.image_rotated = pygame.transform.rotate(self.image, self.velocity.angle_to((1, 0)))
         self.image_rect = self.image_rotated.get_rect(center=pivot)
 
         # Moves the vehicle to the right place
-        self.image_rect.center = self.position
+        self.image_rect.center = self.screen_pos #self.position
 
         # Append debug lines
         self.debug_lines.append(self.velocity)
@@ -84,7 +83,8 @@ class Vehicle(GameObject):
 
         # Calculates steer accel
         steer = desired - self.velocity
-        steer.scale_to_length(pixel_to_metric(self.max_acceleration))
+        if steer.length() > 0:
+            steer.scale_to_length(pixel_to_metric(self.max_acceleration))
 
         return steer
 
@@ -143,7 +143,7 @@ class Vehicle(GameObject):
         self.buffer_zone_image_rect = self.buffer_zone_image_rotated.get_rect(center=pivot)
 
         # Updates buffer zone position
-        self.buffer_zone_image_rect.center = self.position + rotated_offset
+        self.buffer_zone_image_rect.center = rotated_offset + self.screen_pos
 
     def apply_accel(self, vector):
         self.accel = self.accel + Vector2(vector)
@@ -201,6 +201,7 @@ class Vehicle(GameObject):
         self.velocity = speed
 
     def get_pos(self):
+        return self.position
         # Returns the position of the front of the vehicle
         front_distance = self.image.get_width() / 2
         relative_vehicle_front = Vector2(front_distance, 0).rotate(Vector2(1, 0).angle_to(self.velocity))
